@@ -1,9 +1,38 @@
 const express = require('express');
+const puppeteer = require('puppeteer');
+
 const app = express();
 const port = 3000;
 
-app.get('/', (req, res) => {
-  const url = req.query.url;
+app.get('/', async (req, res) => {
+  const url = (req.query.url || '').toString();
+  const width = Number(req.query.width || 1920);
+  const height = Number(req.query.height || 1080);
+  const offset = Number(req.query.offset || 0);
+  const scale = Number(req.query.scale || 1);
+  let error ;
+
+  const image = url ? (await (async () => {
+    try {
+      const browser = await puppeteer.launch();
+      const page = await browser.newPage();
+      await page.setViewport({ width, height, deviceScaleFactor: scale });
+      await page.goto(url, { waitUntil: 'networkidle2' });
+
+      if (offset) {
+        await page.evaluate(offset => {
+          window.scrollTo(0, offset);
+        }, offset);
+      }
+
+      const result = await page.screenshot({ encoding: 'base64' });
+    
+      await browser.close();
+      return result;
+    } catch (ex) {
+      error = ex;
+    }
+  })()) : undefined;
 
   const html = `
     <!DOCTYPE html>
@@ -12,11 +41,16 @@ app.get('/', (req, res) => {
         <title>Image browser${url ? ` - ${url}` : ''}</title>
       </head>
       <body>
-        ${url ? `
-        <img src="https://cdn-ak.f.st-hatena.com/images/fotolife/h/hetiyaborake/20190414/20190414025221.png"/>
-        <hr>` : ''}
+        ${error ? `<p style="color:red;">${error}</p>` : ''}
+        ${image ? `
+        <img src="data:image/png;base64,${image}"/>
+        ` : ''}
         <form>
-          <input name="url"/>
+          Url: <input name="url" value="${url}"/><br>
+          Width: <input name="width" value="${width}"/><br>
+          Height: <input name="height" value="${height}""/><br>
+          Offset: <input name="offset" value="${offset}""/><br>
+          Scale: <input name="scale" value="${scale}""/><br>
           <input type="submit" value="Show"/>
         </form>
       </body>
