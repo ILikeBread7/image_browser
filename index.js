@@ -2,7 +2,7 @@ const express = require('express');
 const puppeteer = require('puppeteer');
 
 const app = express();
-const port = 3000;
+const port = Number(process.env.PORT || 3000);
 
 app.get('/', async (req, res) => {
   const url = (req.query.url || '').toString();
