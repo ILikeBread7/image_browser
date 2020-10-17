@@ -10,11 +10,17 @@ app.get('/', async (req, res) => {
   const height = Number(req.query.height || 1080);
   const offset = Number(req.query.offset || 0);
   const scale = Number(req.query.scale || 1);
-  let error ;
+  let error;
 
   const image = url ? (await (async () => {
     try {
-      const browser = await puppeteer.launch();
+      const browser = await puppeteer.launch(
+        process.env.PORT  // for Heroku
+        ? {
+          args: ['--no-sandbox']
+        }
+        : {}
+      );
       const page = await browser.newPage();
       await page.setViewport({ width, height, deviceScaleFactor: scale });
       await page.goto(url, { waitUntil: 'networkidle2' });
