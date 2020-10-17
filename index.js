@@ -17,7 +17,10 @@ app.get('/', async (req, res) => {
       const browser = await puppeteer.launch(
         process.env.PORT  // for Heroku
         ? {
-          args: ['--no-sandbox']
+          args: [
+            '--no-sandbox',
+            '--disable-setuid-sandbox'
+          ]
         }
         : {}
       );
