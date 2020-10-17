@@ -10,6 +10,7 @@ app.get('/', async (req, res) => {
   const height = Number(req.query.height || 1080);
   const offset = Number(req.query.offset || 0);
   const scale = Number(req.query.scale || 1);
+  const networkidle0 = req.query.networkidle0;
   let error;
 
   const image = url ? (await (async () => {
@@ -26,7 +27,7 @@ app.get('/', async (req, res) => {
       );
       const page = await browser.newPage();
       await page.setViewport({ width, height, deviceScaleFactor: scale });
-      await page.goto(url, { waitUntil: 'networkidle2' });
+      await page.goto(url, { waitUntil: networkidle0 ? 'networkidle0' : 'networkidle2' });
 
       if (offset) {
         await page.evaluate(offset => {
@@ -60,6 +61,7 @@ app.get('/', async (req, res) => {
           Height: <input name="height" value="${height}""/><br>
           Offset: <input name="offset" value="${offset}""/><br>
           Scale: <input name="scale" value="${scale}""/><br>
+          <label>Networkidle0: <input name="networkidle0" type="checkbox" ${networkidle0 ? 'checked' : ''}/></label>
           <input type="submit" value="Show"/>
         </form>
       </body>
@@ -67,7 +69,23 @@ app.get('/', async (req, res) => {
   `;
 
   res.send(html);
-})
+});
+
+app.get('/twitter/:user', (req, res) => {
+  const user = req.params.user;
+
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>Twitter - ${user}</title>
+      </head>
+      <body style="margin: 0px; background-color: #292F33;">
+        <a class="twitter-timeline" data-height="10000" data-dnt="true" data-theme="dark" href="https://twitter.com/${user}?ref_src=twsrc%5Etfw">Tweets by ${user}</a> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+      </body>
+    </html>
+  `);
+});
 
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`);
