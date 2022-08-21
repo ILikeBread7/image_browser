@@ -11,6 +11,7 @@ app.get('/', async (req, res) => {
   const offset = Number(req.query.offset || 0);
   const scale = Number(req.query.scale || 1);
   const networkidle0 = req.query.networkidle0;
+  const sleep = Number(req.query.sleep || 0);
   let error;
 
   const image = url ? (await (async () => {
@@ -28,6 +29,10 @@ app.get('/', async (req, res) => {
       const page = await browser.newPage();
       await page.setViewport({ width, height, deviceScaleFactor: scale });
       await page.goto(url, { waitUntil: networkidle0 ? 'networkidle0' : 'networkidle2' });
+
+      if (sleep) {
+        await new Promise(r => setTimeout(r, sleep));
+      }
 
       if (offset) {
         await page.evaluate(offset => {
@@ -50,7 +55,7 @@ app.get('/', async (req, res) => {
       <head>
         <title>Image browser${url ? ` - ${url}` : ''}</title>
       </head>
-      <body>
+      <body style="margin: 0px;">
         ${error ? `<p style="color:red;">${error}</p>` : ''}
         ${image ? `
         <img src="data:image/png;base64,${image}"/>
@@ -61,6 +66,7 @@ app.get('/', async (req, res) => {
           Height: <input name="height" value="${height}""/><br>
           Offset: <input name="offset" value="${offset}""/><br>
           Scale: <input name="scale" value="${scale}""/><br>
+          Sleep: <input name="sleep" value="${sleep}""/><br>
           <label>Networkidle0: <input name="networkidle0" type="checkbox" ${networkidle0 ? 'checked' : ''}/></label>
           <input type="submit" value="Show"/>
         </form>
@@ -81,7 +87,7 @@ app.get('/twitter/:user', (req, res) => {
         <title>Twitter - ${user}</title>
       </head>
       <body style="margin: 0px; background-color: #292F33;">
-        <a class="twitter-timeline" data-height="10000" data-dnt="true" data-theme="dark" href="https://twitter.com/${user}?ref_src=twsrc%5Etfw">Tweets by ${user}</a> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+        <a class="twitter-timeline" data-dnt="true" data-theme="dark" href="https://twitter.com/${user}?ref_src=twsrc%5Etfw">Tweets by ${user}</a> <script src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
       </body>
     </html>
   `);
